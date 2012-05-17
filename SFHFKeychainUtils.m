@@ -163,6 +163,24 @@ static NSString *SFHFKeychainUtilsErrorDomain = @"SFHFKeychainUtilsErrorDomain";
 	}
 }
 
++ (void) purgeItemsForServiceName:(NSString *) serviceName error: (NSError **) error {
+    if (!serviceName) {
+		*error = [NSError errorWithDomain: SFHFKeychainUtilsErrorDomain code: 2000 userInfo: nil];
+		return;
+	}
+    
+    NSMutableDictionary *searchData = [NSMutableDictionary new];
+    [searchData setObject:(__bridge id)kSecClassGenericPassword forKey:(__bridge id)kSecClass];
+    [searchData setObject:serviceName forKey:(__bridge id)kSecAttrService];
+    
+    OSStatus status = SecItemDelete((__bridge_retained CFDictionaryRef)searchData);
+    
+	if (error != nil && status != noErr) 
+    {
+		*error = [NSError errorWithDomain: SFHFKeychainUtilsErrorDomain code: status userInfo: nil];
+	}
+}
+
 + (SecKeychainItemRef) getKeychainItemReferenceForUsername: (NSString *) username andServiceName: (NSString *) serviceName error: (NSError **) error {
 	if (!username || !serviceName) {
 		*error = [NSError errorWithDomain: SFHFKeychainUtilsErrorDomain code: -2000 userInfo: nil];
@@ -414,6 +432,37 @@ static NSString *SFHFKeychainUtilsErrorDomain = @"SFHFKeychainUtilsErrorDomain";
 	
 	OSStatus status = SecItemDelete((__bridge_retained CFDictionaryRef) query);
 	
+	if (error != nil && status != noErr) 
+    {
+		*error = [NSError errorWithDomain: SFHFKeychainUtilsErrorDomain code: status userInfo: nil];		
+        
+        return NO;
+	}
+    
+    return YES;
+}
+
++ (BOOL) purgeItemsForServiceName:(NSString *) serviceName error: (NSError **) error {
+    if (!serviceName) 
+    {
+		if (error != nil) 
+        {
+			*error = [NSError errorWithDomain: SFHFKeychainUtilsErrorDomain code: -2000 userInfo: nil];
+		}
+		return NO;
+	}
+	
+	if (error != nil) 
+    {
+		*error = nil;
+	}
+    
+    NSMutableDictionary *searchData = [NSMutableDictionary new];
+    [searchData setObject:(__bridge id)kSecClassGenericPassword forKey:(__bridge id)kSecClass];
+    [searchData setObject:serviceName forKey:(__bridge id)kSecAttrService];
+
+    OSStatus status = SecItemDelete((__bridge_retained CFDictionaryRef)searchData);
+
 	if (error != nil && status != noErr) 
     {
 		*error = [NSError errorWithDomain: SFHFKeychainUtilsErrorDomain code: status userInfo: nil];		
